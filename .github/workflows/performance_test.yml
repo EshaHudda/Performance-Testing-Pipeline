@@ -1,0 +1,58 @@
+name: Performance Testing
+
+on: [push] # Or other triggers
+
+jobs:
+  performance_test:
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:latest # Or an image with JMeter/K6 pre-installed
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java for JMeter
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Download and Install JMeter
+        run: |
+          wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-5.6.2.tgz
+          tar -xzf apache-jmeter-5.6.2.tgz
+          sudo mv apache-jmeter-5.6.2 /opt/jmeter
+          echo "JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
+          echo "$JMETER_HOME/bin" >> $GITHUB_PATH
+
+      - name: Start Application (if needed)
+        run: |
+          # Commands to start your application in the background
+          python app.py &
+          sleep 5
+
+      - name: Run JMeter Performance Test
+        run: |
+          mkdir -p jmeter-results
+          jmeter -n -t hello_world_test.jmx -l jmeter-results/report.jtl
+
+      - name: Upload JMeter Report as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-report
+          path: jmeter-results/report.jtl
+
+      - name: Stop Application (if started)
+        if: always()
+        run: pkill -f app.py || true # Ignore if not running
+
+      # Optional: Add steps to process and report on the results
+      # - name: Analyze JMeter Report
+      #   run: python analyze_report.py jmeter-results/report.jtl
+
+      # Example using a K6 Action (if you were using K6)
+      # - name: Run K6 Performance Test
+      #   uses: grafana/k6-action@v0.9.0
+      #   with:
+      #     testFile: your_k6_script.js
