@@ -18,23 +18,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17' # Or your required Java version
 
-      - name: Download and Install JMeter
-        run: |
-         JMETER_VERSION="5.6.3"
-
-          wget https://jmeter.apache.org/download_jmeter.cgi/binaries/apache-jmeter-5.6.3.tgz -O /tmp/apache-jmeter-5.6.3.tgz # Or the apache-jmeter-${JMETER_VERSION}.zip
-          sudo mkdir -p /opt/jmeter
-          sudo tar -xzf /tmp/apache-jmeter-${JMETER_VERSION}.tgz -C /opt/jmeter --strip-components=1
-          echo "JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
-          echo "PATH=$PATH:/opt/jmeter/bin" >> $GITHUB_ENV
-
       - name: Start Application (if needed)
         run: |
           # Commands to start your web application in the background
           # Example for Python Flask:
           python app.py &
           sleep 5 # Give it time to start
-
       - name: Run JMeter Performance Test
         run: |
           mkdir -p jmeter-results
