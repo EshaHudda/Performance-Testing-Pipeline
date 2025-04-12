@@ -1,33 +1,49 @@
 name: Performance Testing
 
-on: [push] # Or your desired triggers
+on: [push] # Or the events that should trigger this workflow
 
 jobs:
   performance_test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Or a different runner environment
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # ... (Steps to set up Java, download/install JMeter, start application) ...
+      # ... other steps like build if necessary ...
+
+      - name: Set up Java for JMeter
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17' # Or your required Java version
+
+      - name: Download and Install JMeter
+        run: |
+          wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-5.6.3.zip -O /tmp/apache-jmeter-5.6.3.zip # Or the apache-jmeter-${JMETER_VERSION}.zip
+          sudo mkdir -p /opt/jmeter
+          sudo apt-get update && sudo apt-get install -y unzip # Ensure unzip is installed
+          sudo unzip /tmp/apache-jmeter-5.6.3.zip -d /opt/jmeter
+          sudo mv apache-jmeter-5.6.3.zip/* /opt/jmeter/
+          echo "JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
+          echo "$JMETER_HOME/bin" >> $GITHUB_PATH
+
+      - name: Start Application (if needed)
+        run: |
+          # Commands to start your web application in the background
+          # Example for Python Flask:
+          python app.py &
+          sleep 5 # Give it time to start
 
       - name: Run JMeter Performance Test
         run: |
           mkdir -p jmeter-results
           jmeter -n -t hello_world_test.jmx -l jmeter-results/report.jtl
         env:
-          JVM_ARGS: "-Xms512m -Xmx512m"
-
-      # Add the upload-artifact step here, after the JMeter test runs
-      - name: Upload JMeter Report as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: jmeter-report
-          path: jmeter-results/report.jtl
+          JVM_ARGS: "-Xms512m -Xmx512m" # Adjust JVM memory as needed
 
       - name: Stop Application (if started)
         if: always()
-        run: pkill -f app.py || true
+        run: pkill -f app.py || true # Ignore if the process isn't running
 
-      # ... (Optional steps for summarizing or analyzing results) ...
+      # ... steps for reporting (see next section) ...
