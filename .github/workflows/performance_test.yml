@@ -1,58 +1,48 @@
 name: Performance Testing
 
-on: [push] # Or other triggers
+on: [push] # Or the events that should trigger this workflow
 
 jobs:
   performance_test:
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:latest # Or an image with JMeter/K6 pre-installed
+    runs-on: ubuntu-latest # Or a different runner environment
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # ... other steps like build if necessary ...
+
       - name: Set up Java for JMeter
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '17' # Or your required Java version
 
       - name: Download and Install JMeter
         run: |
-          wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-5.6.2.tgz
+          wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-5.6.2.tgz # Or the latest version
           tar -xzf apache-jmeter-5.6.2.tgz
-          sudo mv apache-jmeter-5.6.2 /opt/jmeter
+          sudo mkdir -p /opt/jmeter
+          sudo mv apache-jmeter-5.6.2/* /opt/jmeter/
           echo "JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
           echo "$JMETER_HOME/bin" >> $GITHUB_PATH
 
       - name: Start Application (if needed)
         run: |
-          # Commands to start your application in the background
+          # Commands to start your web application in the background
+          # Example for Python Flask:
           python app.py &
-          sleep 5
+          sleep 5 # Give it time to start
 
       - name: Run JMeter Performance Test
         run: |
           mkdir -p jmeter-results
           jmeter -n -t hello_world_test.jmx -l jmeter-results/report.jtl
-
-      - name: Upload JMeter Report as Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: jmeter-report
-          path: jmeter-results/report.jtl
+        env:
+          JVM_ARGS: "-Xms512m -Xmx512m" # Adjust JVM memory as needed
 
       - name: Stop Application (if started)
         if: always()
-        run: pkill -f app.py || true # Ignore if not running
+        run: pkill -f app.py || true # Ignore if the process isn't running
 
-      # Optional: Add steps to process and report on the results
-      # - name: Analyze JMeter Report
-      #   run: python analyze_report.py jmeter-results/report.jtl
-
-      # Example using a K6 Action (if you were using K6)
-      # - name: Run K6 Performance Test
-      #   uses: grafana/k6-action@v0.9.0
-      #   with:
-      #     testFile: your_k6_script.js
+      # ... steps for reporting (see next section) ...
