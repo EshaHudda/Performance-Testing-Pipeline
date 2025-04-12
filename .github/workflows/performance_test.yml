@@ -11,6 +11,11 @@ jobs:
         uses: actions/checkout@v3
 
       # ... other steps like build if necessary ...
+      # Example:
+      # - name: Build Application
+      #   run: |
+      #     # Your build commands here
+      #     echo "Application built"
 
       - name: Set up Java for JMeter
         uses: actions/setup-java@v3
@@ -20,17 +25,27 @@ jobs:
 
       - name: Download and Install JMeter
         run: |
-         wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-5.6.3.zip -O /tmp/apache-jmeter-5.6.3.zip # Or he apache-jmeter-${JMETER_VERSION}.tgz
-         sudo mkdir -p /opt/jmeter
-         sudo apt-get update && sudo apt-get install -y unzip # Ensure unzip is installed
-         sudo unzip /tmp/
-         tar -xzf /tmp/apache-jmeter-5.6.3.zip -C /opt/jmeter --strip-components=1
-         echo "$JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
-         echo "$PATH=$JMETER_HOME/bin:$PATH" >> $GITHUB_ENV
+          JMETER_VERSION="5.6.3" # Or the version you intend to download
+
+          wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz -O /tmp/apache-jmeter-${JMETER_VERSION}.tgz
+          # Alternatively, if the above mirror fails, try another:
+          # wget https://dlcdn.apache.org/jakarta/jmeter/binaries/apache-jmeter-${JMETER_VERSION}.tgz -O /tmp/apache-jmeter-${JMETER_VERSION}.tgz
+
+          sudo mkdir -p /opt/jmeter
+          sudo apt-get update && sudo apt-get install -y unzip # Ensure unzip is installed
+          sudo tar -xzf /tmp/apache-jmeter-${JMETER_VERSION}.tgz -C /opt/jmeter --strip-components=1
+
+          echo "JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
+          echo "$JMETER_HOME/bin" >> $GITHUB_PATH
+        shell: /bin/bash -e {0}
+        env:
+          JAVA_HOME: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.10.7-7/x64
+          JAVA_HOME_17_x64: /opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.10.7-7/x64
 
       - name: Start Application (if needed)
         run: |
           # Commands to start your web application in the background
+          # Replace with the actual command to run your application
           # Example for Python Flask:
           python app.py &
           sleep 5 # Give it time to start
@@ -46,4 +61,23 @@ jobs:
         if: always()
         run: pkill -f app.py || true # Ignore if the process isn't running
 
-      # ... steps for reporting (see next section) ...
+      - name: Upload JMeter Report as Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: jmeter-report
+          path: jmeter-results/report.jtl
+
+      # Optional: Add steps for basic summary in workflow output
+      - name: Summarize JMeter Results
+        run: |
+          # Example using awk to get some basic stats (adapt as needed)
+          awk -F',' '{if (NR > 1) {sum_rt += $2; count++; errors += ($8 != "200")}} END {if (count > 0) {avg_rt = sum_rt / count; error_rate = (errors / count) * 100; printf "Average Response Time: %.2f ms\nError Rate: %.2f%%\n", avg_rt, error_rate}}' jmeter-results/report.jtl
+
+      # Optional: Add steps to analyze performance results using a community action
+      # - name: Analyze Performance Results
+      #   uses: dorny/test-reporter@v1 # Example - look for specific JMeter analyzer actions
+      #   with:
+      #     reporter: jmeter
+      #     results: jmeter-results/report.jtl
+      #     # Optional: fail-on-error: true
+      #     # Optional: max-average-response-time: 100
