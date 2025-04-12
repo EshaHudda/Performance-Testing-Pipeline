@@ -20,15 +20,11 @@ jobs:
 
       - name: Download and Install JMeter
         run: |
-          wget https://jmeter.apache.org/download_jmeter.cgi/binaries/apache-jmeter-5.6.3.zip -O /tmp/apache-jmeter-5.6.3.zip # Or the apache-jmeter-${JMETER_VERSION}.zip
+          wget https://jmeter.apache.org/download_jmeter.cgi/binaries/apache-jmeter-5.6.3.tgz -O /tmp/apache-jmeter-5.6.3.tgz # Or the apache-jmeter-${JMETER_VERSION}.zip
           sudo mkdir -p /opt/jmeter
-          sudo apt-get update && sudo apt-get install -y unzip # Ensure unzip is installed
-          sudo unzip /tmp/apache-jmeter-5.6.3.zip -d /opt/jmeter
-          sudo mv /opt/jmeter/apache-jmeter-5.6.3/* /opt/jmeter/
-          sudo rm -rf /opt/jmeter/apache-jmeter-5.6.3/
+          sudo tar -xzf /tmp/apache-jmeter-${JMETER_VERSION}.tgz -C /opt/jmeter --strip-components=1
           echo "JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
           echo "PATH=$PATH:/opt/jmeter/bin" >> $GITHUB_ENV
-          echo "$JMETER_HOME/bin" >> $GITHUB_PATH
 
       - name: Start Application (if needed)
         run: |
