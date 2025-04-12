@@ -20,9 +20,9 @@ jobs:
 
       - name: Download and Install JMeter
         run: |
-         wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-5.6.2.tgz -O /tmp/apache-jmeter-5.6.2.tgz # Or the apache-jmeter-${JMETER_VERSION}.tgz
+         wget https://archive.apache.org/dist/jakarta/jmeter/binaries/apache-jmeter-5.6.3.tgz -O /tmp/apache-jmeter-5.6.2.tgz # Or the apache-jmeter-${JMETER_VERSION}.tgz
          sudo mkdir -p /opt/jmeter
-         tar -xzf /tmp/apache-jmeter-5.6.2.tgz -C /opt/jmeter --strip-components=1
+         tar -xzf /tmp/apache-jmeter-5.6.3.tgz -C /opt/jmeter --strip-components=1
          echo "$JMETER_HOME=/opt/jmeter" >> $GITHUB_ENV
          echo "$PATH=$JMETER_HOME/bin:$PATH" >> $GITHUB_ENV
 
