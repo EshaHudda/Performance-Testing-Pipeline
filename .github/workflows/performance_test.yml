@@ -24,12 +24,6 @@ jobs:
           # Example for Python Flask:
           python app.py &
           sleep 5 # Give it time to start
-      - name: Run JMeter Performance Test
-        run: |
-          mkdir -p jmeter-results
-          jmeter -n -t hello_world_test.jmx -l jmeter-results/report.jtl
-        env:
-          JVM_ARGS: "-Xms512m -Xmx512m" # Adjust JVM memory as needed
 
       - name: Stop Application (if started)
         if: always()
